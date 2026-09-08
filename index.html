@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mathematics Power Quest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Glassmorphism Utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .glass-dark {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Presisi Bilangan Berpangkat (Superscript) tanpa merusak tinggi baris */
+        sup {
+            font-size: 0.7em;
+            line-height: 0;
+            vertical-align: baseline;
+            position: relative;
+            top: -0.45em;
+            margin: 0 1px;
+        }
+        .math-spacing {
+            line-height: 1.6 !important; 
+            white-space: normal;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }
+
+        /* Animations */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+
+        @keyframes pulse-red {
+            0%, 100% { background-color: #ef4444; transform: scale(1); }
+            50% { background-color: #b91c1c; transform: scale(1.05); box-shadow: 0 0 20px #ef4444; }
+        }
+        .timer-warning { animation: pulse-red 1s infinite; }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        @keyframes slideUpFade {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .slide-up { animation: slideUpFade 0.5s ease-out forwards; }
+
+        /* Hide elements dynamically */
+        .hidden-screen { display: none !important; }
+
+        /* Custom Radio/Avatar Selection */
+        .avatar-label { cursor: pointer; transition: all 0.3s; }
+        .avatar-input:checked + .avatar-label {
+            transform: scale(1.1);
+            border-color: #fbbf24;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Option Button Styling */
+        .option-btn {
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .option-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        .option-btn:active:not(:disabled) { transform: translateY(1px); }
+
+        /* Print Styles for Certificate */
+        @media print {
+            body { background: white; color: black; margin: 0; padding: 0; min-height: auto; }
+            body * { visibility: hidden; }
+            #screen-certificate, #screen-certificate * { visibility: visible; }
+            #screen-certificate {
+                position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+                background: white !important; display: flex !important;
+            }
+            .no-print { display: none !important; }
+            .glass { background: none; border: none; box-shadow: none; backdrop-filter: none; }
+            /* Force landscape if possible, though browser settings usually control this */
+            @page { size: A4 landscape; margin: 0; }
+        }
+
+        #confetti-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 100;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Global Sound Toggle -->
+    <button id="btn-sound" class="fixed top-4 right-4 z-50 glass rounded-full p-3 text-xl hover:bg-white/20 transition-colors no-print" onclick="toggleSound()">
+        🔊
+    </button>
+
+    
+    <!-- 1. SCREEN: START -->
+    <section id="screen-start" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="glass p-10 rounded-3xl text-center max-w-2xl w-full slide-up">
+            <div class="text-6xl mb-6 animate-float">⚡🧠⚡</div>
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600 drop-shadow-lg">
+                MATHEMATICS POWER QUEST
+            </h1>
+            <h2 class="text-xl md:text-2xl font-bold text-indigo-200 mb-6 uppercase tracking-wider">
+                Super Premium Edition
+            </h2>
+            <p class="text-lg text-gray-300 mb-10">
+                Petualangan Bilangan Berpangkat • Matematika Kelas VIII SMP
+            </p>
+            <button onclick="showScreen('screen-profile')" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-bold py-4 px-10 rounded-full text-xl shadow-[0_0_20px_rgba(99,102,241,0.5)] transform transition hover:scale-105 active:scale-95">
+                MULAI PETUALANGAN 🚀
+            </button>
+        </div>
+    </section>
+
+    <!-- 2. SCREEN: PROFILE -->
+    <section id="screen-profile" class="hidden-screen min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="glass p-8 md:p-12 rounded-3xl w-full max-w-3xl slide-up">
+            <h2 class="text-3xl font-bold mb-6 text-center text-yellow-400">SELAMAT DATANG, PEJUANG!</h2>
+            
+            <div class="mb-8">
+                <label class="block text-lg font-semibold mb-2">✍️ Masukkan Nama Kamu:</label>
+                <input type="text" id="player-name" placeholder="Contoh: Ade" class="w-full bg-black/30 border border-white/20 rounded-xl px-4 py-3 text-xl text-white outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/50 transition-all text-center" maxlength="15">
+            </div>
+
+            <div class="mb-8">
+                <label class="block text-lg font-semibold mb-4 text-center">🧑 Pilih Avatar Jagoanmu:</label>
+                <div class="grid grid-cols-3 md:grid-cols-6 gap-4" id="avatar-selection">
+                    <!-- Avatars injected by JS -->
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button onclick="startGameSetup()" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-3 px-12 rounded-full text-xl shadow-lg transform transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                    SIAP BERAKSI! ⚡
+                </button>
+            </div>
+            <button onclick="showScreen('screen-start')" class="mt-6 text-gray-400 hover:text-white transition w-full text-center">🏠 Kembali</button>
+        </div>
+    </section>
+
+    <!-- 3. SCREEN: MAP -->
+    <section id="screen-map" class="hidden-screen min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="glass-dark p-8 rounded-3xl w-full max-w-4xl text-center slide-up">
+            <div class="flex justify-between items-center mb-8 bg-black/30 p-4 rounded-2xl">
+                <div class="flex items-center gap-3">
+                    <div id="map-avatar" class="text-4xl bg-white/10 p-2 rounded-full border border-white/20">🧑</div>
+                    <div class="text-left">
+                        <div id="map-name" class="font-bold text-xl text-yellow-400">Nama</div>
+                        <div class="text-sm text-gray-300">Total XP: <span id="map-xp" class="text-yellow-300 font-bold">0</span></div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-gray-300">Peta Misi</div>
+                    <div class="font-bold">BILANGAN BERPANGKAT</div>
+                </div>
+            </div>
+
+            <div class="relative py-10 flex flex-col items-center gap-6" id="level-map-container">
+                <!-- Levels injected by JS -->
+            </div>
+        </div>
+    </section>
+
+
+    <!-- 4. SCREEN: GAME -->
+    <section id="screen-game" class="hidden-screen min-h-screen flex flex-col p-2 md:p-6">
+        <!-- HUD -->
+        <div class="glass-dark rounded-2xl p-3 md:p-4 mb-4 flex flex-wrap justify-between items-center gap-2 md:gap-4 sticky top-0 z-10">
+            <div class="flex items-center gap-2 md:gap-4">
+                <div id="game-avatar" class="text-3xl md:text-4xl bg-white/10 p-2 rounded-full border border-yellow-400/50">🧑</div>
+                <div>
+                    <div id="game-name" class="font-bold text-yellow-400 leading-tight">Nama</div>
+                    <div class="flex items-center gap-1 mt-1" id="game-lives">
+                        <!-- Hearts injected -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex-1 max-w-md mx-auto hidden md:block">
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                    <span>Progress Level <span id="game-level-indicator">1</span></span>
+                    <span id="game-progress-text">0/5</span>
+                </div>
+                <div class="w-full bg-black/50 rounded-full h-3 border border-white/10">
+                    <div id="game-progress-bar" class="bg-gradient-to-r from-blue-400 to-indigo-500 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 md:gap-6 text-right">
+                <div>
+                    <div class="text-xs text-gray-400 uppercase tracking-wide">XP</div>
+                    <div id="game-xp" class="font-bold text-yellow-300 text-lg md:text-xl">0</div>
+                </div>
+                <div class="bg-black/50 border border-white/20 rounded-xl px-4 py-2 text-center min-w-[80px]">
+                    <div class="text-[10px] text-gray-400 uppercase">Waktu</div>
+                    <div id="game-timer" class="font-mono font-bold text-xl md:text-2xl text-white">60</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Area -->
+        <div class="flex-1 flex flex-col items-center justify-center max-w-4xl w-full mx-auto relative">
+            
+            <!-- Mobile Progress -->
+            <div class="w-full md:hidden mb-4 px-2">
+                 <div class="flex justify-between text-xs font-semibold mb-1">
+                    <span>Soal <span id="game-progress-text-mobile">1/5</span></span>
+                </div>
+                <div class="w-full bg-black/50 rounded-full h-2 border border-white/10">
+                    <div id="game-progress-bar-mobile" class="bg-gradient-to-r from-blue-400 to-indigo-500 h-1.5 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="glass w-full rounded-3xl p-5 sm:p-8 md:p-10 shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent opacity-50"></div>
+                
+                <h3 id="game-level-title" class="text-center text-xs sm:text-sm md:text-base font-bold text-indigo-300 uppercase tracking-widest mb-4 md:mb-6">Level Title</h3>
+                
+                <div id="question-text" class="text-base sm:text-2xl md:text-3xl font-semibold text-center mb-6 md:mb-8 math-spacing min-h-[60px] flex items-center justify-center w-full px-2">
+                    Pertanyaan muncul di sini...
+                </div>
+
+                <!-- Options Grid for MCQ -->
+                <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 w-full max-w-3xl mx-auto">
+                    <!-- Buttons injected -->
+                </div>
+
+                <!-- Input for Boss Level -->
+                <div id="input-container" class="hidden w-full max-w-md mx-auto text-center">
+                    <div class="flex items-center justify-center gap-3 mb-6">
+                        <span class="text-2xl">1 / 5</span>
+                        <sup class="text-2xl"><input type="number" id="boss-input" class="w-16 bg-black/40 border-2 border-yellow-400 rounded-lg text-center py-1 outline-none focus:bg-white/10" placeholder="n"></sup>
+                    </div>
+                    <button onclick="submitBossAnswer()" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 px-8 rounded-full text-xl w-full transition transform hover:scale-105">
+                        JAWAB
+                    </button>
+                </div>
+            </div>
+
+            <!-- Feedback Overlay (Strictly correct/wrong, NO explanation) -->
+            <div id="feedback-overlay" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center rounded-3xl backdrop-blur-md bg-black/60">
+                <div id="feedback-icon" class="text-7xl md:text-9xl mb-4 pop-in">🎉</div>
+                <h2 id="feedback-title" class="text-4xl md:text-6xl font-extrabold tracking-tight pop-in" style="animation-delay: 0.1s;">BENAR!</h2>
+                <div id="feedback-subtitle" class="text-2xl md:text-3xl font-bold mt-4 pop-in text-yellow-300" style="animation-delay: 0.2s;">+10 XP</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. SCREEN: GAME OVER -->
+    <section id="screen-game-over" class="hidden-screen min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="glass-dark border-red-500/50 p-10 rounded-3xl text-center max-w-md w-full slide-up">
+            <div class="text-7xl mb-4">💀</div>
+            <h1 class="text-4xl font-extrabold text-red-500 mb-2">GAME OVER</h1>
+            <p class="text-lg text-gray-300 mb-8">
+                Nyawa kamu habis! Jangan menyerah, Pejuang Matematika! Kamu bisa mencoba lagi dan menjadi lebih hebat! 💪
+            </p>
+            <div class="space-y-4">
+                <button onclick="resetGameAndToMap()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-xl transition">
+                    🔄 COBA LAGI LEVEL INI
+                </button>
+                <button onclick="showScreen('screen-start')" class="w-full bg-transparent border border-white/20 hover:bg-white/10 text-white font-bold py-3 px-6 rounded-xl transition">
+                    🏠 KEMBALI KE MENU
+                </button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- 6. SCREEN: RESULT -->
+    <section id="screen-result" class="hidden-screen min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="glass p-8 md:p-12 rounded-3xl text-center max-w-2xl w-full slide-up relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-40 h-40 bg-yellow-500 rounded-full blur-3xl opacity-20"></div>
+            <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
+
+            <div class="text-5xl mb-4" id="result-avatar">🧑</div>
+            <h2 class="text-2xl font-bold text-gray-300 uppercase tracking-widest mb-1">Misi Selesai!</h2>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-yellow-400 mb-8" id="result-name">SELAMAT, NAMA!</h1>
+
+            <div class="bg-black/30 rounded-2xl p-6 mb-8">
+                <div class="text-6xl mb-2" id="result-badge-icon">👑</div>
+                <div class="text-xl font-bold text-white mb-6 uppercase tracking-wider" id="result-badge-name">MASTER OF EXPONENTS</div>
+                
+                <div class="grid grid-cols-2 gap-4 text-left">
+                    <div class="bg-white/5 rounded-xl p-3 border border-white/10">
+                        <div class="text-xs text-gray-400 uppercase">Skor Akhir</div>
+                        <div class="text-2xl font-bold text-white" id="result-score">100%</div>
+                    </div>
+                    <div class="bg-white/5 rounded-xl p-3 border border-white/10">
+                        <div class="text-xs text-gray-400 uppercase">Total XP</div>
+                        <div class="text-2xl font-bold text-yellow-300" id="result-xp">500</div>
+                    </div>
+                    <div class="bg-white/5 rounded-xl p-3 border border-white/10">
+                        <div class="text-xs text-gray-400 uppercase">Benar / Salah</div>
+                        <div class="text-lg font-bold text-white"><span class="text-green-400" id="result-correct">18</span> / <span class="text-red-400" id="result-wrong">0</span></div>
+                    </div>
+                    <div class="bg-white/5 rounded-xl p-3 border border-white/10">
+                        <div class="text-xs text-gray-400 uppercase">Sisa Nyawa</div>
+                        <div class="text-lg font-bold text-white" id="result-lives">❤️❤️❤️</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="showScreen('screen-certificate')" class="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-3 px-6 rounded-xl shadow-lg transition">
+                    📜 LIHAT SERTIFIKAT
+                </button>
+                <button onclick="showScreen('screen-leaderboard')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl transition border border-indigo-400">
+                    🏆 LEADERBOARD
+                </button>
+                <button onclick="fullReset()" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold py-3 px-6 rounded-xl transition md:col-span-2">
+                    🔄 MAIN LAGI DARI AWAL
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. SCREEN: LEADERBOARD -->
+    <section id="screen-leaderboard" class="hidden-screen min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="glass p-8 md:p-10 rounded-3xl w-full max-w-3xl slide-up">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-center text-yellow-400 mb-2">🏆 HALL OF MATH HEROES</h1>
+            <p class="text-center text-gray-300 mb-8">Pemain Teratas Sepanjang Masa</p>
+
+            <div class="bg-black/30 rounded-2xl overflow-hidden mb-6 border border-white/10">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-white/10 text-gray-300 text-sm uppercase">
+                            <th class="p-4 w-16 text-center">Rank</th>
+                            <th class="p-4">Pemain</th>
+                            <th class="p-4 text-center">Skor</th>
+                            <th class="p-4 text-center">XP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body" class="divide-y divide-white/5">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex flex-wrap justify-between gap-4 mt-6">
+                <button onclick="showScreen('screen-start')" class="bg-transparent border border-white/30 hover:bg-white/10 text-white font-bold py-2 px-6 rounded-xl transition">
+                    🏠 Menu Utama
+                </button>
+                <button onclick="resetLeaderboard()" class="text-red-400 hover:text-red-300 text-sm flex items-center gap-1 transition">
+                    🗑️ Reset Data
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. SCREEN: CERTIFICATE (Printable) -->
+    <section id="screen-certificate" class="hidden-screen min-h-screen flex items-center justify-center p-4 bg-gray-900">
+        <div class="w-full max-w-4xl">
+            <!-- Controls (Hidden on Print) -->
+            <div class="mb-4 flex justify-between gap-4 no-print bg-black/50 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
+                <button onclick="showScreen('screen-result')" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-6 rounded-lg font-bold transition">
+                    ⬅ Kembali
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white py-2 px-6 rounded-lg font-bold flex items-center gap-2 transition shadow-lg shadow-blue-500/30">
+                        🖨️ CETAK
+                    </button>
+                    <button onclick="alert('Untuk menyimpan PDF:\n1. Klik Cetak / Print\n2. Pada bagian Destination/Printer, pilih \'Save as PDF\''); window.print();" class="bg-red-600 hover:bg-red-500 text-white py-2 px-6 rounded-lg font-bold flex items-center gap-2 transition">
+                        💾 SIMPAN PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- The Certificate -->
+            <div class="bg-white text-black p-2 border-8 border-double border-yellow-600 relative overflow-hidden certificate-container shadow-2xl">
+                <!-- Inner Border -->
+                <div class="border-4 border-indigo-900 p-8 md:p-12 h-full flex flex-col items-center text-center relative bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-yellow-50 to-white">
+                    
+                    <!-- Decorative Elements -->
+                    <div class="absolute top-0 left-0 w-32 h-32 border-t-8 border-l-8 border-yellow-500 -mt-2 -ml-2"></div>
+                    <div class="absolute top-0 right-0 w-32 h-32 border-t-8 border-r-8 border-yellow-500 -mt-2 -mr-2"></div>
+                    <div class="absolute bottom-0 left-0 w-32 h-32 border-b-8 border-l-8 border-yellow-500 -mb-2 -ml-2"></div>
+                    <div class="absolute bottom-0 right-0 w-32 h-32 border-b-8 border-r-8 border-yellow-500 -mb-2 -mr-2"></div>
+
+                    <!-- Header -->
+                    <div class="text-yellow-600 text-6xl mb-4">🏆</div>
+                    <h1 class="text-4xl md:text-5xl font-extrabold text-indigo-900 mb-2 uppercase tracking-widest font-serif">Sertifikat Penghargaan</h1>
+                    <p class="text-lg text-gray-600 mb-8 italic">Diberikan dengan bangga kepada:</p>
+
+                    <!-- Recipient -->
+                    <h2 id="cert-name" class="text-5xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2 mb-4 w-3/4 inline-block font-serif">Nama Siswa</h2>
+                    <p class="text-xl text-indigo-700 font-bold mb-6">Sebagai: MATHEMATICS POWER QUEST HERO</p>
+
+                    <!-- Body -->
+                    <p class="text-gray-700 max-w-2xl text-lg leading-relaxed mb-8">
+                        Atas keberhasilan dan dedikasinya dalam menyelesaikan 
+                        <strong class="text-black">Petualangan Bilangan Berpangkat</strong> 
+                        Mata Pelajaran Matematika Kelas VIII SMP.
+                    </p>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-3 gap-6 w-full max-w-2xl mb-12 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                        <div>
+                            <div class="text-sm text-gray-500 uppercase font-bold">Skor Akhir</div>
+                            <div id="cert-score" class="text-2xl font-extrabold text-indigo-900">100%</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500 uppercase font-bold">Total XP</div>
+                            <div id="cert-xp" class="text-2xl font-extrabold text-yellow-600">500</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500 uppercase font-bold">Predikat</div>
+                            <div id="cert-badge" class="text-lg font-extrabold text-indigo-900">Master</div>
+                        </div>
+                    </div>
+
+                    <!-- Footer & Signature -->
+                    <div class="flex justify-between items-end w-full px-8 mt-auto">
+                        <div class="text-left">
+                            <p class="text-gray-500 font-bold mb-1">Tanggal Penyelesaian:</p>
+                            <p id="cert-date" class="text-lg font-semibold text-gray-800 border-b border-gray-400 pb-1">1 Januari 2026</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="h-20 flex items-end justify-center mb-2">
+                                <!-- Decorative Signature Text -->
+                                <span class="font-['Brush_Script_MT',cursive,serif] text-4xl text-blue-900 opacity-80 transform -rotate-6">R. Ade Hermadi</span>
+                            </div>
+                            <p class="text-xl font-bold text-black border-t border-black pt-2">R. Ade Hermadi, S.Hut</p>
+                            <p class="text-gray-600 font-semibold">Guru Matematika</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // --- DATA & STATE ---
+        const AVATARS = ['👦', '👧', '🧑', '👨‍🎓', '👩‍🎓', '🦸'];
+        
+        // Sumber soal: Dokumen Tugas Daring MTK Kls 8 tgl 8 Sept 2026.docx
+        const QUESTION_BANK = {
+            1: [ // Level 1: Pemanasan (Konsep dasar, nilai pangkat nol & negatif)
+                { id: "L1_1", q: "Nilai dari 15<sup>0</sup> adalah ....", options: ["0", "1", "15", "-15"], correct: "1", xp: 10 },
+                { id: "L1_2", q: "Nilai dari 2<sup>-4</sup> adalah ....", options: ["-16", "16", "-1/16", "1/16"], correct: "1/16", xp: 10 },
+                { id: "L1_3", q: "Hasil dari 2<sup>3</sup> &times; 2<sup>5</sup> adalah ....", options: ["2<sup>8</sup>", "2<sup>15</sup>", "4<sup>8</sup>", "4<sup>15</sup>"], correct: "2<sup>8</sup>", xp: 10 },
+                { id: "L1_4", q: "Bentuk sederhana dari 3<sup>7</sup> : 3<sup>4</sup> adalah ....", options: ["3<sup>3</sup>", "3<sup>11</sup>", "3<sup>28</sup>", "9<sup>3</sup>"], correct: "3<sup>3</sup>", xp: 10 },
+                { id: "L1_5", q: "Bentuk sederhana dari 5<sup>3</sup> &times; 2<sup>3</sup> adalah ....", options: ["7<sup>3</sup>", "10<sup>3</sup>", "10<sup>6</sup>", "25<sup>3</sup>"], correct: "10<sup>3</sup>", xp: 10 }
+            ],
+            2: [ // Level 2: Operasi Pangkat (Perkalian, pembagian, pangkat dari pangkat)
+                { id: "L2_1", q: "Hasil dari (2<sup>3</sup>)<sup>4</sup> adalah ....", options: ["2<sup>7</sup>", "2<sup>12</sup>", "2<sup>64</sup>", "8<sup>4</sup>"], correct: "2<sup>12</sup>", xp: 15 },
+                { id: "L2_2", q: "Hasil dari 4<sup>2</sup> &times; 4<sup>3</sup> adalah ....", options: ["4<sup>5</sup>", "4<sup>6</sup>", "8<sup>5</sup>", "16<sup>5</sup>"], correct: "4<sup>5</sup>", xp: 15 },
+                { id: "L2_3", q: "Bentuk sederhana dari 7<sup>8</sup> / 7<sup>3</sup> adalah ....", options: ["7<sup>2</sup>", "7<sup>5</sup>", "7<sup>11</sup>", "49<sup>5</sup>"], correct: "7<sup>5</sup>", xp: 15 },
+                { id: "L2_4", q: "Hasil dari (3<sup>2</sup>)<sup>3</sup> adalah ....", options: ["3<sup>5</sup>", "3<sup>6</sup>", "3<sup>8</sup>", "6<sup>3</sup>"], correct: "3<sup>6</sup>", xp: 15 },
+                { id: "L2_5", q: "Hasil dari 8<sup>4</sup> / 2<sup>4</sup> adalah ....", options: ["2<sup>4</sup>", "4<sup>4</sup>", "6<sup>4</sup>", "4<sup>2</sup>"], correct: "4<sup>4</sup>", xp: 15 }
+            ],
+            3: [ // Level 3: Detektif (Analisis)
+                { id: "L3_1", q: "Perhatikan: 2<sup>4</sup> &times; 2<sup>3</sup> = 2<sup>7</sup>. Alasan yang tepat adalah ....", options: ["Pangkat dikalikan karena operasinya perkalian", "Pangkat dikurangi karena basisnya sama", "Pangkat dijumlahkan karena basisnya sama", "Basis dan pangkat dijumlahkan"], correct: "Pangkat dijumlahkan karena basisnya sama", xp: 20 },
+                { id: "L3_2", q: "Siswa mengerjakan: 5<sup>6</sup> : 5<sup>2</sup> = 5<sup>8</sup>. Kesalahan siswa adalah ....", options: ["Seharusnya pangkat dikalikan", "Seharusnya pangkat dijumlahkan", "Seharusnya pangkat dikurangkan", "Seharusnya basis dibagi"], correct: "Seharusnya pangkat dikurangkan", xp: 20 },
+                { id: "L3_3", q: "Diketahui a<sup>3</sup> &times; a<sup>5</sup> = a<sup>n</sup>. Nilai n adalah ....", options: ["2", "8", "15", "125"], correct: "8", xp: 20 }
+            ],
+            4: [ // Level 4: HOTS
+                { id: "L4_1", q: "Rina berkata: '2<sup>6</sup> lebih besar dari 4<sup>3</sup>'. Pernyataan Rina adalah ....", options: ["Benar, karena pangkat 6 lebih besar", "Salah, karena 2<sup>6</sup> = 4<sup>3</sup>", "Salah, karena 4<sup>3</sup> > 2<sup>6</sup>", "Salah, karena keduanya bernilai 12"], correct: "Salah, karena 2<sup>6</sup> = 4<sup>3</sup>", xp: 25 },
+                { id: "L4_2", q: "Bentuk sederhana dari (2<sup>5</sup> &times; 2<sup>3</sup>) / 2<sup>4</sup> adalah ....", options: ["2<sup>2</sup>", "2<sup>3</sup>", "2<sup>4</sup>", "2<sup>6</sup>"], correct: "2<sup>4</sup>", xp: 25 }
+            ],
+            5: [ // Level 5: Boss (Berdasarkan Soal Uraian)
+                { id: "L5_1", type: "mcq", q: "Boss Attack 1: Sederhanakan bentuk 2<sup>4</sup> &times; 2<sup>3</sup> : 2<sup>2</sup>", options: ["2<sup>4</sup>", "2<sup>5</sup>", "2<sup>6</sup>", "2<sup>9</sup>"], correct: "2<sup>5</sup>", xp: 30 },
+                { id: "L5_2", type: "mcq", q: "Boss Attack 2: Nilai dari (3<sup>2</sup>)<sup>3</sup> &times; 3<sup>0</sup>", options: ["3<sup>5</sup>", "3<sup>6</sup>", "1", "3<sup>0</sup>"], correct: "3<sup>6</sup>", xp: 30 },
+                { id: "L5_3", type: "input", q: "Final Boss: Bentuk pangkat positif dari 5<sup>3</sup> : 5<sup>7</sup> adalah 1 / 5<sup>n</sup>. Berapakah nilai n?", correct: "4", xp: 30 }
+            ]
+        };
+
+        const LEVEL_NAMES = ["Pemanasan Otak", "Operasi Pangkat", "Detektif Matematika", "Tantangan HOTS", "Boss Matematika"];
+
+        let state = {
+            player: { name: "", avatar: "" },
+            game: {
+                currentLevel: 1,
+                unlockedLevel: 1,
+                lives: 3,
+                xp: 0,
+                scoreCorrect: 0,
+                scoreTotal: 0, // Will be 18 total (5+5+3+2+3)
+                questionsPool: [],
+                currentQIndex: 0,
+                timer: 0,
+                timerInterval: null,
+                isAnswering: false
+            },
+            audio: { enabled: true, ctx: null }
+        };
+
+        // --- CORE FUNCTIONS ---
+
+        function init() {
+            renderAvatars();
+            document.getElementById('player-name').addEventListener('input', (e) => {
+                document.querySelector('#screen-profile button').disabled = e.target.value.trim().length === 0;
+            });
+            document.querySelector('#screen-profile button').disabled = true;
+            updateLeaderboardTable();
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden-screen'));
+            document.getElementById(screenId).classList.remove('hidden-screen');
+            window.scrollTo(0,0);
+        }
+
+        // --- AUDIO SYSTEM (Web Audio API) ---
+        function initAudio() {
+            if (!state.audio.ctx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                state.audio.ctx = new AudioContext();
+            }
+            if(state.audio.ctx.state === 'suspended') state.audio.ctx.resume();
+        }
+
+        function toggleSound() {
+            state.audio.enabled = !state.audio.enabled;
+            document.getElementById('btn-sound').innerText = state.audio.enabled ? '🔊' : '🔇';
+        }
+
+        function playSound(type) {
+            if (!state.audio.enabled) return;
+            initAudio();
+            const ctx = state.audio.ctx;
+            const osc = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            osc.connect(gainNode);
+            gainNode.connect(ctx.destination);
+
+            const now = ctx.currentTime;
+            
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now); // A4
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.1); // A5
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'tick') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, now);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'over') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 1);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 1);
+                osc.start(now);
+                osc.stop(now + 1);
+            } else if (type === 'win') {
+                osc.type = 'sine';
+                const notes = [440, 554.37, 659.25, 880]; // A major arpeggio
+                notes.forEach((freq, i) => {
+                    const t = now + (i * 0.1);
+                    const osc2 = ctx.createOscillator();
+                    const gain2 = ctx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(ctx.destination);
+                    osc2.frequency.setValueAtTime(freq, t);
+                    gain2.gain.setValueAtTime(0.3, t);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+                    osc2.start(t);
+                    osc2.stop(t + 0.3);
+                });
+            }
+        }
+
+        // --- PROFILE & MAP LOGIC ---
+        function renderAvatars() {
+            const container = document.getElementById('avatar-selection');
+            let html = '';
+            AVATARS.forEach((av, i) => {
+                html += `
+                    <div class="relative">
+                        <input type="radio" name="avatar" id="av-${i}" value="${av}" class="hidden avatar-input" ${i===0?'checked':''}>
+                        <label for="av-${i}" class="avatar-label flex items-center justify-center text-4xl w-16 h-16 rounded-full bg-white/10 border-2 border-transparent mx-auto">
+                            ${av}
+                        </label>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function startGameSetup() {
+            const nameInput = document.getElementById('player-name').value.trim();
+            if (!nameInput) return;
+            
+            initAudio(); // Initialize audio on first user gesture
+            
+            state.player.name = nameInput;
+            state.player.avatar = document.querySelector('input[name="avatar"]:checked').value;
+            
+            // Reset Game State completely
+            state.game = {
+                currentLevel: 1, unlockedLevel: 1, lives: 3, xp: 0,
+                scoreCorrect: 0, scoreTotal: 0, questionsPool: [],
+                currentQIndex: 0, timer: 0, timerInterval: null, isAnswering: false
+            };
+            
+            updateMapUI();
+            showScreen('screen-map');
+        }
+
+        function updateMapUI() {
+            document.getElementById('map-name').innerText = state.player.name;
+            document.getElementById('map-avatar').innerText = state.player.avatar;
+            document.getElementById('map-xp').innerText = state.game.xp;
+            
+            const container = document.getElementById('level-map-container');
+            let html = '';
+            
+            for (let i = 1; i <= 5; i++) {
+                const isUnlocked = i <= state.game.unlockedLevel;
+                const isCurrent = i === state.game.currentLevel;
+                const color = i === 5 ? 'from-purple-600 to-pink-600' : 
+                             isUnlocked ? 'from-green-500 to-emerald-600' : 'from-gray-600 to-gray-700';
+                
+                const icon = i === 5 ? '👑' : (isUnlocked ? '⭐' : '🔒');
+                const lockStyle = isUnlocked ? '' : 'opacity-50 grayscale';
+                const pulseStyle = isCurrent ? 'animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.5)] border-yellow-400' : 'border-white/20';
+                
+                html += `
+                    <div class="relative z-10 w-full max-w-sm">
+                        <button onclick="${isUnlocked ? `startLevel(${i})` : ''}" 
+                            class="w-full bg-gradient-to-r ${color} ${lockStyle} border-2 ${pulseStyle} rounded-2xl p-4 flex items-center justify-between transition transform hover:scale-105">
+                            <div class="flex items-center gap-4">
+                                <div class="text-3xl bg-black/30 w-12 h-12 rounded-full flex items-center justify-center">${icon}</div>
+                                <div class="text-left">
+                                    <div class="font-bold text-white uppercase tracking-wide">Level ${i}</div>
+                                    <div class="text-sm text-gray-200">${LEVEL_NAMES[i-1]}</div>
+                                </div>
+                            </div>
+                            ${isCurrent ? '<div class="bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-full animate-bounce">MAIN</div>' : ''}
+                        </button>
+                    </div>
+                `;
+                
+                if (i < 5) {
+                    html += `<div class="h-8 w-1 bg-gradient-to-b ${isUnlocked ? 'from-emerald-500 to-emerald-500/20' : 'from-gray-600 to-gray-600/20'} my-1 rounded"></div>`;
+                }
+            }
+            container.innerHTML = html;
+        }
+
+        // --- GAMEPLAY LOGIC ---
+
+        // Fisher-Yates Shuffle
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startLevel(levelNum) {
+            if (state.game.lives <= 0) {
+                showScreen('screen-game-over');
+                return;
+            }
+            state.game.currentLevel = levelNum;
+            // Clone and shuffle questions for this level
+            state.game.questionsPool = shuffleArray([...QUESTION_BANK[levelNum]]);
+            state.game.currentQIndex = 0;
+            state.game.scoreTotal += state.game.questionsPool.length;
+            
+            document.getElementById('game-level-title').innerText = `LEVEL ${levelNum}: ${LEVEL_NAMES[levelNum-1]}`;
+            
+            updateGameHUD();
+            showScreen('screen-game');
+            loadQuestion();
+        }
+
+        function updateGameHUD() {
+            document.getElementById('game-name').innerText = state.player.name;
+            document.getElementById('game-avatar').innerText = state.player.avatar;
+            document.getElementById('game-xp').innerText = state.game.xp;
+            
+            // Lives
+            let livesHtml = '';
+            for(let i=0; i<3; i++) {
+                livesHtml += `<span class="text-xl ${i < state.game.lives ? 'opacity-100 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'opacity-30 grayscale'} filter">❤️</span>`;
+            }
+            document.getElementById('game-lives').innerHTML = livesHtml;
+
+            // Progress
+            const total = state.game.questionsPool.length;
+            const current = state.game.currentQIndex;
+            const pct = total === 0 ? 0 : (current / total) * 100;
+            const progText = `${current}/${total}`;
+            
+            document.getElementById('game-level-indicator').innerText = state.game.currentLevel;
+            document.getElementById('game-progress-text').innerText = progText;
+            document.getElementById('game-progress-text-mobile').innerText = progText;
+            document.getElementById('game-progress-bar').style.width = `${pct}%`;
+            document.getElementById('game-progress-bar-mobile').style.width = `${pct}%`;
+        }
+
+        function loadQuestion() {
+            if (state.game.lives <= 0) return;
+            
+            state.game.isAnswering = false;
+            const qData = state.game.questionsPool[state.game.currentQIndex];
+            
+            document.getElementById('question-text').innerHTML = qData.q;
+            
+            const optionsContainer = document.getElementById('options-container');
+            const inputContainer = document.getElementById('input-container');
+            
+            optionsContainer.innerHTML = '';
+            document.getElementById('boss-input').value = '';
+            
+            if (qData.type === 'input') {
+                optionsContainer.classList.add('hidden');
+                inputContainer.classList.remove('hidden');
+                setTimeout(() => document.getElementById('boss-input').focus(), 500);
+            } else {
+                inputContainer.classList.add('hidden');
+                optionsContainer.classList.remove('hidden');
+                
+                // Shuffle options while keeping track of correct one via value
+                const shuffledOptions = shuffleArray([...qData.options]);
+                
+                // Jika opsi jawaban berupa kalimat panjang, gunakan 1 kolom agar penulisan tetap 1 baris
+                const hasLongOptions = shuffledOptions.some(opt => opt.length > 18);
+                if (hasLongOptions) {
+                    optionsContainer.className = 'grid grid-cols-1 gap-3 w-full max-w-3xl mx-auto';
+                } else {
+                    optionsContainer.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 w-full max-w-2xl mx-auto';
+                }
+                
+                shuffledOptions.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn w-full text-base sm:text-lg md:text-xl font-medium py-3.5 px-5 rounded-xl text-center shadow-lg math-spacing leading-snug flex items-center justify-center';
+                    btn.innerHTML = opt;
+                    btn.onclick = () => handleAnswer(opt, qData.correct, qData.xp);
+                    optionsContainer.appendChild(btn);
+                });
+            }
+            
+            updateGameHUD();
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(state.game.timerInterval);
+            state.game.timer = 60;
+            updateTimerDisplay();
+            
+            const timerEl = document.getElementById('game-timer').parentElement;
+            timerEl.classList.remove('timer-warning');
+
+            state.game.timerInterval = setInterval(() => {
+                if (state.game.isAnswering) return;
+                
+                state.game.timer--;
+                updateTimerDisplay();
+                
+                if (state.game.timer <= 10 && state.game.timer > 0) {
+                    timerEl.classList.add('timer-warning');
+                    playSound('tick');
+                }
+                
+                if (state.game.timer <= 0) {
+                    clearInterval(state.game.timerInterval);
+                    timerEl.classList.remove('timer-warning');
+                    handleAnswer(null, "timeout", 0); // Trigger wrong answer logic
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            document.getElementById('game-timer').innerText = state.game.timer;
+        }
+
+        function submitBossAnswer() {
+            if (state.game.isAnswering) return;
+            const val = document.getElementById('boss-input').value.trim();
+            if (val === '') return;
+            const qData = state.game.questionsPool[state.game.currentQIndex];
+            handleAnswer(val, qData.correct, qData.xp);
+        }
+
+        function handleAnswer(userAnswer, correctAnswer, xpReward) {
+            if (state.game.isAnswering) return;
+            state.game.isAnswering = true;
+            clearInterval(state.game.timerInterval);
+            
+            // Disable buttons
+            document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
+            document.getElementById('boss-input').disabled = true;
+
+            const isCorrect = userAnswer === correctAnswer;
+            const isTimeout = correctAnswer === "timeout";
+
+            // SUPER STRICT RULE: DO NOT SHOW CORRECT ANSWER. DO NOT SHOW EXPLANATION.
+            // ONLY SHOW FEEDBACK OVERLAY.
+            
+            const overlay = document.getElementById('feedback-overlay');
+            const icon = document.getElementById('feedback-icon');
+            const title = document.getElementById('feedback-title');
+            const subtitle = document.getElementById('feedback-subtitle');
+            
+            overlay.classList.remove('hidden');
+            
+            // Reset animations
+            icon.style.animation = 'none';
+            title.style.animation = 'none';
+            subtitle.style.animation = 'none';
+            overlay.offsetHeight; // trigger reflow
+            icon.style.animation = null;
+            title.style.animation = null;
+            subtitle.style.animation = null;
+
+            if (isCorrect) {
+                playSound('correct');
+                state.game.scoreCorrect++;
+                state.game.xp += xpReward;
+                
+                overlay.className = 'absolute inset-0 z-20 flex flex-col items-center justify-center rounded-3xl backdrop-blur-md bg-green-900/80';
+                icon.innerText = '🎉';
+                title.innerText = 'BENAR!';
+                title.className = 'text-4xl md:text-6xl font-extrabold tracking-tight pop-in text-white';
+                subtitle.innerText = `+${xpReward} XP`;
+                subtitle.className = 'text-2xl md:text-3xl font-bold mt-4 pop-in text-yellow-300';
+                
+            } else {
+                playSound('wrong');
+                state.game.lives--;
+                
+                overlay.className = 'absolute inset-0 z-20 flex flex-col items-center justify-center rounded-3xl backdrop-blur-md bg-red-900/80';
+                icon.innerText = isTimeout ? '⏰' : '❌';
+                title.innerText = isTimeout ? 'WAKTU HABIS!' : 'BELUM TEPAT!';
+                title.className = 'text-3xl md:text-5xl font-extrabold tracking-tight pop-in text-white text-center px-4';
+                subtitle.innerText = '-1 NYAWA 💔';
+                subtitle.className = 'text-2xl md:text-3xl font-bold mt-4 pop-in text-red-300';
+            }
+
+            updateGameHUD();
+
+            // Wait 1.5 seconds, then strictly move to next question or end game
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                
+                if (state.game.lives <= 0) {
+                    playSound('over');
+                    showScreen('screen-game-over');
+                } else {
+                    state.game.currentQIndex++;
+                    if (state.game.currentQIndex < state.game.questionsPool.length) {
+                        loadQuestion();
+                    } else {
+                        // Level Complete
+                        if (state.game.currentLevel < 5) {
+                            // Unlock next
+                            state.game.unlockedLevel = Math.max(state.game.unlockedLevel, state.game.currentLevel + 1);
+                            state.game.currentLevel++;
+                            updateMapUI();
+                            showScreen('screen-map');
+                            triggerConfetti(); // Mini celebration
+                        } else {
+                            // Finished entire game
+                            finishGame();
+                        }
+                    }
+                }
+            }, 1500);
+        }
+
+        function resetGameAndToMap() {
+            // Reset lives to 3 but keep XP
+            state.game.lives = 3;
+            // The scoreTotal was incremented by current pool length when level started, 
+            // we should subtract it before restarting to avoid double counting if they retry.
+            // Actually, for simplicity, let's keep stats cumulative but reset pool index.
+            // A simpler approach: just subtract current pool length from total to reset this level's expectation.
+            state.game.scoreTotal -= state.game.questionsPool.length; 
+            
+            updateMapUI();
+            showScreen('screen-map');
+        }
+
+        // --- RESULT & CERTIFICATE ---
+
+        function calculateBadge(percentage) {
+            if (percentage >= 90) return { name: "MASTER OF EXPONENTS", icon: "👑" };
+            if (percentage >= 80) return { name: "MATH LEGEND", icon: "🥇" };
+            if (percentage >= 70) return { name: "POWER MATH HERO", icon: "🥈" };
+            if (percentage >= 60) return { name: "RISING MATH STAR", icon: "🥉" };
+            return { name: "MATH WARRIOR", icon: "💪" };
+        }
+
+        function finishGame() {
+            playSound('win');
+            triggerConfetti(true);
+            
+            const totalQ = state.game.scoreTotal;
+            const correctQ = state.game.scoreCorrect;
+            const wrongQ = totalQ - correctQ;
+            const percentage = totalQ === 0 ? 0 : Math.round((correctQ / totalQ) * 100);
+            
+            const badge = calculateBadge(percentage);
+            
+            // Populate Result Screen (NO REVIEW, ONLY STATS)
+            document.getElementById('result-avatar').innerText = state.player.avatar;
+            document.getElementById('result-name').innerText = `SELAMAT, ${state.player.name.toUpperCase()}!`;
+            document.getElementById('result-badge-icon').innerText = badge.icon;
+            document.getElementById('result-badge-name').innerText = badge.name;
+            document.getElementById('result-score').innerText = `${percentage}%`;
+            document.getElementById('result-xp').innerText = state.game.xp;
+            document.getElementById('result-correct').innerText = correctQ;
+            document.getElementById('result-wrong').innerText = wrongQ;
+            
+            let finalLives = '';
+            for(let i=0; i<state.game.lives; i++) finalLives += '❤️';
+            document.getElementById('result-lives').innerText = finalLives;
+
+            // Populate Certificate
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            
+            document.getElementById('cert-name').innerText = state.player.name;
+            document.getElementById('cert-score').innerText = `${percentage}%`;
+            document.getElementById('cert-xp').innerText = state.game.xp;
+            document.getElementById('cert-badge').innerText = badge.name;
+            document.getElementById('cert-date').innerText = dateStr;
+
+            // Save to Leaderboard
+            saveToLeaderboard(state.player.name, state.player.avatar, percentage, state.game.xp);
+
+            showScreen('screen-result');
+        }
+
+        function fullReset() {
+            showScreen('screen-start');
+        }
+
+        // --- LEADERBOARD (localStorage) ---
+
+        function saveToLeaderboard(name, avatar, score, xp) {
+            let lb = JSON.parse(localStorage.getItem('mathQuestLB') || '[]');
+            lb.push({ name, avatar, score, xp, date: new Date().getTime() });
+            
+            // Sort by Score (desc), then XP (desc)
+            lb.sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                return b.xp - a.xp;
+            });
+            
+            // Keep top 10
+            lb = lb.slice(0, 10);
+            localStorage.setItem('mathQuestLB', JSON.stringify(lb));
+            updateLeaderboardTable();
+        }
+
+        function updateLeaderboardTable() {
+            const lb = JSON.parse(localStorage.getItem('mathQuestLB') || '[]');
+            const tbody = document.getElementById('leaderboard-body');
+            
+            if (lb.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-400">Belum ada pahlawan. Jadilah yang pertama!</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            lb.forEach((entry, i) => {
+                let rankIcon = `${i+1}`;
+                if (i === 0) rankIcon = '🥇';
+                if (i === 1) rankIcon = '🥈';
+                if (i === 2) rankIcon = '🥉';
+
+                html += `
+                    <tr class="hover:bg-white/5 transition border-t border-white/5">
+                        <td class="p-4 text-center font-bold text-xl">${rankIcon}</td>
+                        <td class="p-4 flex items-center gap-3">
+                            <span class="text-2xl">${entry.avatar}</span>
+                            <span class="font-bold text-white">${entry.name}</span>
+                        </td>
+                        <td class="p-4 text-center font-bold text-green-400">${entry.score}%</td>
+                        <td class="p-4 text-center font-bold text-yellow-400">${entry.xp}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function resetLeaderboard() {
+            if(confirm("Apakah Anda yakin ingin menghapus semua data Leaderboard?")) {
+                localStorage.removeItem('mathQuestLB');
+                updateLeaderboardTable();
+            }
+        }
+
+        // --- CONFETTI ANIMATION (Canvas murni, tanpa library) ---
+        let confettiRunning = false;
+        function triggerConfetti(heavy = false) {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            const colors = ['#fce18a', '#ff726d', '#b48def', '#f4306d', '#42A5F5', '#66BB6A'];
+            const count = heavy ? 300 : 100;
+
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2 + (Math.random() * 200),
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 20 - 10,
+                    dy: Math.random() * -20 - 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.random() * 10,
+                    tiltAngle: 0,
+                    tiltAngleInc: (Math.random() * 0.07) + 0.05
+                });
+            }
+
+            if(confettiRunning) return;
+            confettiRunning = true;
+
+            function render() {
+                requestAnimationFrame(render);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                let active = false;
+                particles.forEach(p => {
+                    p.tiltAngle += p.tiltAngleInc;
+                    p.y += (Math.cos(p.tiltAngle) + 1 + p.r / 2) / 2;
+                    p.x += Math.sin(p.tiltAngle) * 2;
+                    p.dy += 0.1; // gravity
+                    p.x += p.dx;
+                    p.y += p.dy;
+
+                    if (p.y <= canvas.height) active = true;
+
+                    ctx.beginPath();
+                    ctx.lineWidth = p.r;
+                    ctx.strokeStyle = p.color;
+                    ctx.moveTo(p.x + p.tilt + p.r, p.y);
+                    ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+                    ctx.stroke();
+                });
+
+                if(!active) {
+                    confettiRunning = false;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            render();
+            
+            // Stop generating new ones after a while to clear canvas
+            setTimeout(() => {
+                particles.length = 0;
+            }, 5000);
+        }
+
+        // Resize handler for confetti
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('confetti-canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Initialize on load
+        window.onload = init;
+
+    </script>
+</body>
+</html>
